@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网络请求诊断工具</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .input-group input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
+        }
+        .input-group button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .input-group button:hover {
+            background-color: #2980b9;
+        }
+        .input-group button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .result-container {
+            margin-top: 20px;
+        }
+        .result-section {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .result-header {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            font-weight: bold;
+            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .result-header:after {
+            content: '▼';
+            font-size: 12px;
+        }
+        .result-header.collapsed:after {
+            content: '►';
+        }
+        .result-content {
+            padding: 15px;
+            background-color: #fff;
+            overflow-x: auto;
+        }
+        .result-content.collapsed {
+            display: none;
+        }
+        .result-content pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        .loading:after {
+            content: '.';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+            80%, 100% { content: ''; }
+        }
+        .error {
+            color: #e74c3c;
+            padding: 10px;
+            background-color: #fadbd8;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}
+    </style>
+</head>
+<body>
+    <a href="https://github.com/sdzwb89/netCheckTools" class="github-corner" aria-label="View source on GitHub">
+        <svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true">
+            <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+            <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+            <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path>
+        </svg>
+    </a>
+    <div class="container">
+        <h1>网络请求诊断工具</h1>
+        
+        <div class="input-group">
+            <input type="text" id="url-input" placeholder="请输入视频地址..." value="https://example.com/video.mp4">
+            <button id="query-btn">查询</button>
+        </div>
+        
+        <div id="error" class="error"></div>
+        <div id="loading" class="loading">正在查询中</div>
+        
+        <div id="result-container" class="result-container">
+            <!-- 结果将在这里动态生成 -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlInput = document.getElementById('url-input');
+            const queryBtn = document.getElementById('query-btn');
+            const resultContainer = document.getElementById('result-container');
+            const loadingElement = document.getElementById('loading');
+            const errorElement = document.getElementById('error');
+            
+            // 切换结果部分的展开/折叠状态
+            resultContainer.addEventListener('click', function(e) {
+                if (e.target.classList.contains('result-header')) {
+                    e.target.classList.toggle('collapsed');
+                    e.target.nextElementSibling.classList.toggle('collapsed');
+                }
+            });
+            
+            queryBtn.addEventListener('click', async function() {
+                const url = urlInput.value.trim();
+                
+                if (!url) {
+                    showError('请输入有效的视频地址');
+                    return;
+                }
+                
+                // 重置界面状态
+                resultContainer.innerHTML = '';
+                errorElement.style.display = 'none';
+                loadingElement.style.display = 'block';
+                queryBtn.disabled = true;
+                
+                try {
+                    const result = await diagnoseUrl(url);
+                    displayResults(result);
+                } catch (error) {
+                    showError(`请求失败: ${error.message}`);
+                } finally {
+                    loadingElement.style.display = 'none';
+                    queryBtn.disabled = false;
+                }
+            });
+
+            async function diagnoseUrl(targetUrl) {
+                const result = {
+                    url: targetUrl,
+                    timing: {},
+                    dnsInfo: {}
+                };
+
+                try {
+                    const parsedUrl = new URL(targetUrl);
+                    
+                    // 使用Performance API测量DNS解析时间
+                    const dnsStart = performance.now();
+                    const dnsResult = await new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = img.onerror = () => {
+                            const dnsEnd = performance.now();
+                            resolve({
+                                lookupTime: Math.round(dnsEnd - dnsStart)
+                            });
+                        };
+                        img.src = `${parsedUrl.origin}/favicon.ico?_=${Date.now()}`;
+                    });
+
+                    result.dnsInfo = {
+                        hostname: parsedUrl.hostname,
+                        lookupTime: dnsResult.lookupTime
+                    };
+
+                    // 使用Performance API和Resource Timing API测量网络性能
+                    const fetchStart = performance.now();
+                    const response = await fetch(targetUrl, {
+                        method: 'HEAD',
+                        headers: {
+                            'User-Agent': 'Network-Diagnostic-Tool/1.0'
+                        }
+                    });
+
+                    const fetchEnd = performance.now();
+                    const perfEntries = performance.getEntriesByName(targetUrl);
+                    const perfEntry = perfEntries[perfEntries.length - 1];
+
+                    if (perfEntry) {
+                        result.timing = {
+                            dns: Math.round(perfEntry.domainLookupEnd - perfEntry.domainLookupStart),
+                            tcp: Math.round(perfEntry.connectEnd - perfEntry.connectStart),
+                            tls: parsedUrl.protocol === 'https:' ? Math.round(perfEntry.secureConnectionStart > 0 ? perfEntry.connectEnd - perfEntry.secureConnectionStart : 0) : 0,
+                            ttfb: Math.round(perfEntry.responseStart - perfEntry.requestStart),
+                            download: Math.round(perfEntry.responseEnd - perfEntry.responseStart),
+                            total: Math.round(fetchEnd - fetchStart)
+                        };
+                    }
+
+                    // 收集响应头信息
+                    result.statusCode = response.status;
+                    result.contentType = response.headers.get('content-type') || '';
+                    result.contentLength = parseInt(response.headers.get('content-length') || '0', 10);
+                    
+                    // 收集请求和响应头信息
+                    result.requestHeaders = {};
+                    result.responseHeaders = {};
+                    for (const [key, value] of response.headers) {
+                        result.responseHeaders[key] = value;
+                    }
+
+                    return result;
+                } catch (error) {
+                    result.error = error.message;
+                    return result;
+                }
+            }
+            
+            function showError(message) {
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+                loadingElement.style.display = 'none';
+                queryBtn.disabled = false;
+            }
+            
+            function displayResults(data) {
+                // 创建基本信息部分
+                createResultSection('基本信息', formatBasicInfo(data));
+                
+                // 创建请求头部分
+                if (data.requestHeaders) {
+                    createResultSection('请求头', formatHeaders(data.requestHeaders));
+                }
+                
+                // 创建响应头部分
+                if (data.responseHeaders) {
+                    createResultSection('响应头', formatHeaders(data.responseHeaders));
+                }
+                
+                // 创建DNS信息部分
+                if (data.dnsInfo) {
+                    createResultSection('DNS信息', formatDnsInfo(data.dnsInfo));
+                }
+                
+                // 创建时间统计部分
+                if (data.timing) {
+                    createResultSection('时间统计', formatTiming(data.timing));
+                }
+                
+                // 创建错误信息部分（如果有）
+                if (data.error) {
+                    createResultSection('错误信息', `<pre>${escapeHtml(data.error)}</pre>`);
+                }
+            }
+            
+            function createResultSection(title, content) {
+                const section = document.createElement('div');
+                section.className = 'result-section';
+                
+                const header = document.createElement('div');
+                header.className = 'result-header';
+                header.textContent = title;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'result-content';
+                contentDiv.innerHTML = content;
+                
+                section.appendChild(header);
+                section.appendChild(contentDiv);
+                resultContainer.appendChild(section);
+            }
+            
+            function formatBasicInfo(data) {
+                let html = '<table>';
+                html += `<tr><td>URL</td><td>${escapeHtml(data.url)}</td></tr>`;
+                html += `<tr><td>状态码</td><td>${data.statusCode || '未知'}</td></tr>`;
+                html += `<tr><td>内容类型</td><td>${escapeHtml(data.contentType || '未知')}</td></tr>`;
+                html += `<tr><td>内容长度</td><td>${formatSize(data.contentLength || 0)}</td></tr>`;
+                html += '</table>';
+                return html;
+            }
+            
+            function formatHeaders(headers) {
+                if (!headers || Object.keys(headers).length === 0) {
+                    return '<p>无可用信息</p>';
+                }
+                let html = '<table>';
+                for (const [key, value] of Object.entries(headers)) {
+                    html += `<tr><td>${escapeHtml(key)}</td><td>${escapeHtml(value)}</td></tr>`;
+                }
+                html += '</table>';
+                return html;
+            }
+            
+            function formatDnsInfo(dnsInfo) {
+                let html = '<table>';
+                html += `<tr><td>主机名</td><td>${escapeHtml(dnsInfo.hostname || '未知')}</td></tr>`;
+                html += `<tr><td>DNS查询时间</td><td>${dnsInfo.lookupTime || 0} ms</td></tr>`;
+                html += '</table>';
+                return html;
+            }
+            
+            function formatTiming(timing) {
+                let html = '<table>';
+                html += `<tr><td>DNS解析</td><td>${timing.dns || 0} ms</td></tr>`;
+                html += `<tr><td>TCP连接</td><td>${timing.tcp || 0} ms</td></tr>`;
+                html += `<tr><td>TLS握手</td><td>${timing.tls || 0} ms</td></tr>`;
+                html += `<tr><td>首字节时间(TTFB)</td><td>${timing.ttfb || 0} ms</td></tr>`;
+                html += `<tr><td>下载时间</td><td>${timing.download || 0} ms</td></tr>`;
+                html += `<tr><td>总时间</td><td>${timing.total || 0} ms</td></tr>`;
+                html += '</table>';
+                return html;
+            }
+            
+            function escapeHtml(str) {
+                if (!str) return '';
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+            
+            function formatSize(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+        });
+    </script>
+</body>
+</html>

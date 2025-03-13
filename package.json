@@ -1,0 +1,16 @@
+{
+  "name": "cdn-diagnostic-tool",
+  "version": "1.0.0",
+  "description": "网络请求诊断工具",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "pm2:start": "pm2 start server.js --name cdn-diagnostic-tool"
+  },
+  "dependencies": {
+    "pm2": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
